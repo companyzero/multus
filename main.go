@@ -15,7 +15,7 @@ import (
 	"strconv"
 
 	"github.com/jrick/ss/keyfile"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 const FormatVersion = uint16(1)
@@ -111,7 +111,7 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Fprintf(os.Stderr, "%q secret: ", cfg.Restore.SecretFile)
-		secret, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+		secret, err := term.ReadPassword(int(os.Stdin.Fd()))
 		fmt.Fprint(os.Stderr, "\n")
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -161,7 +161,7 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Fprintf(os.Stderr, "%q secret: ", cfg.Restore.SecretFile)
-		secret, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+		secret, err := term.ReadPassword(int(os.Stdin.Fd()))
 		fmt.Fprint(os.Stderr, "\n")
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
