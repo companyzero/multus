@@ -6,27 +6,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [1.13, 1.14]
+        go: [1.16, 1.17]
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@331ce1d993939866bb63c32c6cbbfd48fa76fc57 #v2
         with:
           go-version: ${{ matrix.go }}
       - name: Check out source
-        uses: actions/checkout@v1
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install librsync-dev
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f #v2.3.4
       - name: Install Linters
-        run: "curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.25.0"
+        run: "curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.44.0"
       - name: Build
-        env:
-          GO111MODULE: "on"
         run: go build ./...
       - name: Lint
-        env:
-          GO111MODULE: "on"
-        run: |
-          export PATH=${PATH}:$(go env GOPATH)/bin
-          golangci-lint run --disable-all --deadline=10m --enable=gofmt --enable=golint --enable=govet --enable=gosimple --enable=ineffassign
+        run: golangci-lint run --disable-all --deadline=10m --enable=gofmt --enable=revive --enable=govet --enable=gosimple --enable=ineffassign
