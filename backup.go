@@ -265,17 +265,56 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 				if !bytes.Equal(currentSig.Bytes(), thisSig.Bytes()) {
 					if currentSig.Len() != 0 {
 						log.Printf("%q: changed", srcPath)
-						delta.Reset()
 						readBuffer.Reset(currentSig.Bytes())
-						err = rsync.GenDelta(readBuffer, srcFD, info.Size(), delta)
-						if err != nil {
-							srcFD.Close()
-							return err
-						}
-						readBuffer.Reset(delta.Bytes())
 
-						err = snap.Add(MD, readBuffer, int64(readBuffer.Len()))
-						readBuffer.Reset(nil)
+						if info.Size() > memoryLimit*10 {
+							tmpFile, err := os.CreateTemp(cfg.BackupPath, "delta")
+							if err != nil {
+								srcFD.Close()
+								return err
+							}
+							err = rsync.GenDelta(readBuffer, srcFD, info.Size(), tmpFile)
+							if err != nil {
+								tmpFile.Close()
+								os.Remove(tmpFile.Name())
+								srcFD.Close()
+								return err
+							}
+							if _, err = tmpFile.Seek(0, 0); err != nil {
+								tmpFile.Close()
+								os.Remove(tmpFile.Name())
+								srcFD.Close()
+								return err
+							}
+							tmpFileInfo, err := tmpFile.Stat()
+							if err != nil {
+								tmpFile.Close()
+								os.Remove(tmpFile.Name())
+								srcFD.Close()
+								return err
+							}
+							err = snap.Add(MD, tmpFile, tmpFileInfo.Size())
+							if err != nil {
+								tmpFile.Close()
+								os.Remove(tmpFile.Name())
+								srcFD.Close()
+								return err
+							}
+							tmpFile.Close()
+							os.Remove(tmpFile.Name())
+						} else {
+							delta.Reset()
+							readBuffer.Reset(currentSig.Bytes())
+							err = rsync.GenDelta(readBuffer, srcFD, info.Size(), delta)
+							if err != nil {
+								srcFD.Close()
+								return err
+							}
+							readBuffer.Reset(delta.Bytes())
+
+							err = snap.Add(MD, readBuffer, int64(readBuffer.Len()))
+							readBuffer.Reset(nil)
+						}
 					} else {
 						log.Printf("%q new file", srcPath)
 						st, err := srcFD.Stat()
