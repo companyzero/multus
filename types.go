@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -454,8 +453,8 @@ func (s *Snapshot) Add(md *Metadata, dataReader io.ReadSeeker, dataLen int64) er
 		}
 
 		if numBytes != dataLen {
-			log.Printf("WARN: %q changed size during write: %d != %d",
-				md.Path, dataLen, numBytes)
+			sysLog.Warning(fmt.Sprintf("%q changed size during write: %d != %d",
+				md.Path, dataLen, numBytes))
 		}
 	}
 	return nil

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"gopkg.in/yaml.v2"
@@ -18,6 +18,7 @@ type Host struct {
 }
 
 type config struct {
+	Debug       bool
 	DryRun      bool
 	StoragePath string
 	BWLimit     string
@@ -31,7 +32,7 @@ type config struct {
 
 func loadConfig() (*config, error) {
 	configPath := filepath.Join(defaultHomeDir, "multus-agent.conf")
-	configFile, err := ioutil.ReadFile(configPath)
+	configFile, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}

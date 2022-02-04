@@ -117,14 +117,13 @@ func cleanup(ctx context.Context, storagePath string, maxSize int64, dryRun bool
 	if err != nil {
 		return err
 	}
+	sysLog.Info(fmt.Sprintf("total size: %d bytes, max size: %d bytes", totalSize, maxSize))
 	log.Printf("total size: %d bytes, max size: %d bytes", totalSize, maxSize)
 	if totalSize <= maxSize {
 		return nil
 	}
-	log.Printf("doing cleanup...")
 
 	sort.Sort(files)
-	log.Printf("%+v", files)
 
 	deletedSize := int64(0)
 	curTime := files[0].Timestamp
@@ -139,10 +138,13 @@ func cleanup(ctx context.Context, storagePath string, maxSize int64, dryRun bool
 			curTime = file.Timestamp
 		}
 		if dryRun {
+			debugf("deleting %q (%d) (dryrun)", file.Path, file.Size)
 			log.Printf("deleting %q (%d) (dryrun)", file.Path, file.Size)
 		} else {
+			debugf("deleting %q (%d)", file.Path, file.Size)
 			log.Printf("deleting %q (%d)", file.Path, file.Size)
-			if err = os.Remove(file.Path); err != nil {
+			if err := os.Remove(file.Path); err != nil {
+				sysLog.Err(fmt.Sprintf("Removing %s: %v", file.Path, err))
 				log.Printf("ERROR: Remove: %s: %v", file.Path, err)
 				continue
 			}
@@ -150,6 +152,7 @@ func cleanup(ctx context.Context, storagePath string, maxSize int64, dryRun bool
 		totalSize -= file.Size
 		deletedSize += file.Size
 	}
+	sysLog.Info(fmt.Sprintf("deleted %d bytes", deletedSize))
 	log.Printf("deleted %d bytes", deletedSize)
 
 	return nil

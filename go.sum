@@ -1,13 +1,13 @@
 github.com/companyzero/sntrup4591761 v0.0.0-20200131011700-2b0d299dbd22 h1:vfqLMkB1UqwJliW0I/34oscQawInrVfL1uPjGEEt2YY=
 github.com/companyzero/sntrup4591761 v0.0.0-20200131011700-2b0d299dbd22/go.mod h1:LoZJNGDWmVPqMEHmeJzj4Weq4Stjc6FKY6FVpY3Hem0=
+github.com/dajohi/rsync v0.0.0-20220210212722-7c40f7496082 h1:vaK4/rtPfKEPSn2pFLYsAcEgcdD3UUc6NbM3WqTsJG8=
+github.com/dajohi/rsync v0.0.0-20220210212722-7c40f7496082/go.mod h1:RvU+CW15mbpJkN7ohQffu30yfzPI6s3XZY1Unc2Jur8=
 github.com/dchest/blake2b v1.0.0 h1:KK9LimVmE0MjRl9095XJmKqZ+iLxWATvlcpVFRtaw6s=
 github.com/dchest/blake2b v1.0.0/go.mod h1:U034kXgbJpCle2wSk5ybGIVhOSHCVLMDqOzcPEA0F7s=
 github.com/jrick/ss v0.9.1 h1:rdWjwsHrCiGC947XAQ3hGgzSFNeHjHflRC9X+1Z8uPU=
 github.com/jrick/ss v0.9.1/go.mod h1:tA2uBeHeEKpXG3LfCfPo/sMG7Q2yOxP5d2ctIV6Rx8c=
 github.com/smtc/rollsum v0.0.0-20150721100732-39e98d252100 h1:i0RlfVCicU2hdE7lSl0e8VxJtJIpfLhvyZXdb4VGHmY=
 github.com/smtc/rollsum v0.0.0-20150721100732-39e98d252100/go.mod h1:6sQHUq9MNR2x9+cpk8+oegntSXGnXHopnOv92j2tikk=
-github.com/smtc/rsync v0.0.0-20151014010438-0a038bb0deb8 h1:PKRycleyjjrjXOvzSgkM/J6aBg/qv3V5V3QwrqpkC8k=
-github.com/smtc/rsync v0.0.0-20151014010438-0a038bb0deb8/go.mod h1:oq5k6hI+1FWgfZnl/CUunoN5tQDJkgX5ziiQFPk2ATA=
 github.com/smtc/seekbuffer v0.0.0-20151009054628-711359748967 h1:W1sTuG/sEqqum0BZ6bI1V++UqMJ+dxoeX7Biz7EarmE=
 github.com/smtc/seekbuffer v0.0.0-20151009054628-711359748967/go.mod h1:yaoAwyoO9sNREC+8EVI+DgdGfUpMTVR9XzqxS7yGRF4=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=

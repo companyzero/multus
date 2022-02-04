@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -34,6 +33,13 @@ func lookupGroup(groupName string) (int, error) {
 	return int(gid), nil
 }
 
+func debugf(format string, a ...interface{}) {
+	if syslogDebug {
+		str := fmt.Sprintf(format, a...)
+		sysLog.Debug(str)
+	}
+}
+
 func removeOld(destDir string, dryRun bool) {
 	files, err := ioutil.ReadDir(destDir)
 	if err != nil {
@@ -45,12 +51,12 @@ func removeOld(destDir string, dryRun bool) {
 		}
 		filePath := filepath.Join(destDir, file.Name())
 		if dryRun {
-			log.Printf("deleting %s (dryrun)", filePath)
+			debugf("deleting %s (dryrun)", filePath)
 		} else {
-			log.Printf("deleting %s", filePath)
+			debugf("deleting %s", filePath)
 			err := os.Remove(filePath)
 			if err != nil {
-				log.Printf("ERROR: %v", err)
+				sysLog.Err(fmt.Sprintf("failed to delete %v: %v", filePath, err))
 				continue
 			}
 		}
@@ -58,6 +64,7 @@ func removeOld(destDir string, dryRun bool) {
 }
 
 func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
+	sysLog.Info("starting backup")
 	destDir := filepath.Clean(cfg.BackupPath)
 	destDirAbs, err := filepath.Abs(destDir)
 	if err != nil {
@@ -76,13 +83,14 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 	}
 	err = os.Chown(destDir, uid, gid)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to chown %q: %w", destDir, err)
 	}
 
 	sigFile := filepath.Join(destDir, "sig.cache")
 	existingSC, err := LoadSignatureCache(sigFile)
 	if err != nil && !os.IsNotExist(err) {
-		return err
+		sysLog.Err(fmt.Sprintf("failed to load signature file %q: %v", sigFile, err))
+		existingSC = nil
 	}
 
 	var sc *SignatureCache
@@ -93,7 +101,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 		sc, err = NewSignatureCache(filepath.Join(destDir, "sig.cache.inprogress"), existingSC.timeStamp, existingSC.Instance()+1)
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create new signature cache: %w", err)
 	}
 
 	pathsToCheck := existingSC.Paths()
@@ -102,7 +110,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 		removeOld(destDir, cfg.DryRun)
 	}
 
-	log.Printf("----------  RUNNING LEVEL %d (%v) -----------", sc.instance, sc.timeStamp)
+	debugf("RUNNING LEVEL %d (%v)", sc.instance, sc.timeStamp)
 
 	snap, err := NewSnapshot(ctx, pubKey, uid, gid, cfg.Backup.GZLevel, destDir, sc.hostname, sc.timeStamp, sc.instance, sc.version)
 	if err != nil {
@@ -134,7 +142,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 			}
 
 			if err != nil {
-				log.Printf("Walk: %v", err)
+				sysLog.Err(fmt.Sprintf("Walk: %v", err))
 				return nil
 			}
 			if ctx.Err() != nil {
@@ -154,7 +162,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 			for _, exclude := range cfg.Backup.rExcludes {
 				if exclude.MatchString(srcPath) {
 					filesExcluded++
-					log.Printf("%q: excluding", srcPath)
+					debugf("%q: excluding", srcPath)
 					return nil
 				}
 			}
@@ -174,7 +182,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 			fileMode := os.FileMode(MD.Attribs.Mode)
 			switch {
 			case isSocket(fileMode):
-				log.Printf("skipping socket file: %v", srcPath)
+				debugf("skipping socket file: %v", srcPath)
 				return nil
 			case isCharDevice(fileMode):
 				fallthrough
@@ -189,9 +197,9 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 				}
 				if !bytes.Equal(currentSig.Bytes(), thisSig.Bytes()) {
 					if currentSig.Len() != 0 {
-						log.Printf("%q changed", srcPath)
+						debugf("%q changed", srcPath)
 					} else {
-						log.Printf("%q new file", srcPath)
+						debugf("%q new file", srcPath)
 					}
 					err = snap.Add(MD, nil, 0)
 					if err != nil {
@@ -202,7 +210,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 						return err
 					}
 				} else {
-					log.Printf("%q no change", srcPath)
+					debugf("%q no change", srcPath)
 					err = sc.Add(srcPath, currentSig.Bytes())
 					if err != nil {
 						return err
@@ -222,7 +230,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 				}
 				if !bytes.Equal(currentSig.Bytes(), thisSig.Bytes()) {
 					if currentSig.Len() != 0 {
-						log.Printf("%q changed", srcPath)
+						debugf("%q changed", srcPath)
 
 						delta.Reset()
 						readBuffer.Reset(currentSig.Bytes())
@@ -232,7 +240,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 						}
 						dataReader.Reset(delta.Bytes())
 					} else {
-						log.Printf("%q new file", srcPath)
+						debugf("%q new file", srcPath)
 					}
 					err = snap.Add(MD, dataReader, int64(dataReader.Len()))
 					if err != nil {
@@ -243,7 +251,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 						return err
 					}
 				} else {
-					log.Printf("%q: no change", srcPath)
+					debugf("%q: no change", srcPath)
 					err = sc.Add(srcPath, currentSig.Bytes())
 					if err != nil {
 						return err
@@ -264,7 +272,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 				}
 				if !bytes.Equal(currentSig.Bytes(), thisSig.Bytes()) {
 					if currentSig.Len() != 0 {
-						log.Printf("%q: changed", srcPath)
+						debugf("%q: changed", srcPath)
 						readBuffer.Reset(currentSig.Bytes())
 
 						if info.Size() > memoryLimit*10 {
@@ -316,7 +324,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 							readBuffer.Reset(nil)
 						}
 					} else {
-						log.Printf("%q new file", srcPath)
+						debugf("%q new file", srcPath)
 						st, err := srcFD.Stat()
 						if err != nil {
 							srcFD.Close()
@@ -338,7 +346,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 						return err
 					}
 				} else {
-					log.Printf("%q: no change", srcPath)
+					debugf("%q: no change", srcPath)
 					err = sc.Add(srcPath, currentSig.Bytes())
 					if err != nil {
 						srcFD.Close()
@@ -359,7 +367,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 
 	// handle deleted files
 	for deletedFilePath := range pathsToCheck {
-		log.Printf("%q: deleted", deletedFilePath)
+		debugf("%q: deleted", deletedFilePath)
 		err = snap.Add(&Metadata{Path: deletedFilePath, Attribs: FileAttributes{}}, nil, 0)
 		if err != nil {
 			snap.Close()
@@ -384,10 +392,10 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 	}
 	err = os.Chown(sigFile, uid, gid)
 	if err != nil {
-		log.Printf("%v", err)
+		sysLog.Err(fmt.Sprintf("failed to chown signature file %q: %v", sigFile, err))
 	}
 
-	log.Printf("completed: duration:%v bytes written:%d files-skipped:%d",
-		time.Since(startTime), snap.BytesWritten(), filesExcluded)
+	sysLog.Info(fmt.Sprintf("completed: duration:%v bytes written:%d files-skipped:%d",
+		time.Since(startTime), snap.BytesWritten(), filesExcluded))
 	return nil
 }
