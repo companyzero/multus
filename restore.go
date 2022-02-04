@@ -51,7 +51,7 @@ func restore(ctx context.Context, secretKey *stream.SecretKey, sourceDir, destDi
 	if len(snapList) > 1 {
 		fmt.Println("snapshots:")
 		for ts, idx := range snapList {
-			fmt.Printf("%d: %v\n", idx, ts)
+			log.Printf("%d: %v", idx, ts)
 		}
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Fprintf(os.Stderr, "enter id to restore: ")

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"log/syslog"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -20,15 +21,32 @@ import (
 
 const FormatVersion = uint16(1)
 
+var (
+	syslogDebug bool
+	sysLog      *syslog.Writer
+)
+
 func usage() {
 	fmt.Fprintln(os.Stderr, "backup\nrestore /RESTOREPATH [file] [level]\ncat <inc-file>")
 }
 
 func main() {
+	var err error
+	sysLog, err = syslog.New(syslog.LOG_EMERG|syslog.LOG_DAEMON, "")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to create syslog logger: %v", err)
+		os.Exit(1)
+	}
+
 	cfg, err := loadConfig()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		err = fmt.Errorf("loadConfig failed: %v", err)
+		log.Printf("%v", err)
+		sysLog.Err(err.Error())
 		os.Exit(1)
+	}
+	if cfg.Debug {
+		syslogDebug = true
 	}
 	if len(os.Args) < 2 {
 		usage()
@@ -37,14 +55,14 @@ func main() {
 	if cfg.Profile {
 		go func() {
 			listenAddr := "localhost:45454"
-			log.Printf("Creating profiling server "+
-				"listening on %s", listenAddr)
+			sysLog.Info(fmt.Sprintf("Creating profiling server "+
+				"listening on %s", listenAddr))
 			profileRedirect := http.RedirectHandler("/debug/pprof",
 				http.StatusSeeOther)
 			http.Handle("/", profileRedirect)
 			err := http.ListenAndServe(listenAddr, nil)
 			if err != nil {
-				log.Printf("%v", err)
+				sysLog.Err(fmt.Sprintf("%v", err))
 				os.Exit(1)
 			}
 		}()
@@ -180,7 +198,7 @@ func main() {
 		os.Exit(1)
 	}
 	if gErr != nil {
-		fmt.Fprintln(os.Stderr, gErr)
+		sysLog.Err(gErr.Error())
 		os.Exit(1)
 	}
 }

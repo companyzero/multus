@@ -18,3 +18,5 @@ require (
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 )
+
+replace github.com/smtc/rsync => github.com/dajohi/rsync v0.0.0-20220210212722-7c40f7496082
