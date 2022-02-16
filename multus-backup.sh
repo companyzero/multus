@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-MULTUS=/home/dhill/go/src/multus/multus
+MULTUS=/usr/local/bin/multus
 T=$(mktemp /tmp/_multus.XXXXXXXXX)
 if [ $? != 0 ]; then
    	echo 'multus-backup - failed to create temporary file' | logger 

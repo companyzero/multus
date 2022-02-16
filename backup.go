@@ -276,7 +276,7 @@ func backup(ctx context.Context, pubKey *stream.PublicKey, cfg *config) error {
 						readBuffer.Reset(currentSig.Bytes())
 
 						if info.Size() > memoryLimit*10 {
-							tmpFile, err := os.CreateTemp(cfg.BackupPath, "delta")
+							tmpFile, err := os.CreateTemp(cfg.BackupPath, info.Name())
 							if err != nil {
 								srcFD.Close()
 								return err
