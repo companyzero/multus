@@ -32,6 +32,7 @@ func isSymlink(filemode os.FileMode) bool {
 	return filemode&os.ModeSymlink == os.ModeSymlink
 }
 
+/*
 func major(rdev uint64) uint64 {
 	return (rdev >> 8) & 0xff
 }
@@ -39,6 +40,7 @@ func major(rdev uint64) uint64 {
 func minor(rdev uint64) uint64 {
 	return (rdev & 0xff) | ((rdev & 0xffff0000) >> 8)
 }
+*/
 
 func signatureFromReader(dstBuf *bytes.Buffer, fd io.ReadSeeker, len int64) error {
 	// Save the current offset
