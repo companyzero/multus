@@ -6,16 +6,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
-)
-
-var (
-	fileRexp = regexp.MustCompile(`\.gz\.enc$`)
-	hashRexp = regexp.MustCompile(`[[:xdigit:]]{64}`)
 )
 
 type File struct {
@@ -43,23 +37,23 @@ func genTimestamp(name string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("invalid filename")
 	}
 
-	year, err := strconv.ParseInt(string(name[0:4]), 10, 64)
+	year, err := strconv.ParseInt(name[0:4], 10, 64)
 	if err != nil {
 		return time.Time{}, err
 	}
-	month, err := strconv.ParseInt(string(name[4:6]), 10, 64)
+	month, err := strconv.ParseInt(name[4:6], 10, 64)
 	if err != nil {
 		return time.Time{}, err
 	}
-	day, err := strconv.ParseInt(string(name[6:8]), 10, 64)
+	day, err := strconv.ParseInt(name[6:8], 10, 64)
 	if err != nil {
 		return time.Time{}, err
 	}
-	hour, err := strconv.ParseInt(string(name[8:10]), 10, 64)
+	hour, err := strconv.ParseInt(name[8:10], 10, 64)
 	if err != nil {
 		return time.Time{}, err
 	}
-	min, err := strconv.ParseInt(string(name[10:12]), 10, 64)
+	min, err := strconv.ParseInt(name[10:12], 10, 64)
 	if err != nil {
 		return time.Time{}, err
 	}
